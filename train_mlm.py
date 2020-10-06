@@ -50,7 +50,7 @@ from transformers import (
     set_seed,
 )
 
-
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.info('Logger set up')
 
