@@ -24,7 +24,6 @@ GPT, GPT-2 and CTRL are fine-tuned using a causal language modeling (CLM) loss. 
 using a masked language modeling (MLM) loss. XLNet is fine-tuned using a permutation language modeling (PLM) loss.
 """
 
-from lamb import Lamb
 
 
 import logging
@@ -32,6 +31,7 @@ import math
 import os
 from dataclasses import dataclass, field
 from typing import Optional
+from lamb import Lamb
 
 from transformers import (
     CONFIG_MAPPING,
@@ -52,7 +52,7 @@ from transformers import (
 
 
 logger = logging.getLogger(__name__)
-
+logger.info('Logger set up')
 
 MODEL_CONFIG_CLASSES = list(MODEL_WITH_LM_HEAD_MAPPING.keys())
 MODEL_TYPES = tuple(conf.model_type for conf in MODEL_CONFIG_CLASSES)
@@ -152,6 +152,7 @@ def get_dataset(
 
 
 def main():
+    logger.info('entered main')
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
