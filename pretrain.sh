@@ -23,7 +23,9 @@ python3 train_mlm.py \
  --line_by_line \
  --save_steps=2500 \
  --warmup_steps=1333 \
- --debug True
+ --logging_steps=1\
+ --debug \
+ --logging_dir=debug\
 
 
 #original
