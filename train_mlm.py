@@ -22,6 +22,8 @@ Customized because TrainingArguments does not allow to switch to LAMB. Hardcoded
 Fine-tuning the library models for language modeling on a text file (GPT, GPT-2, CTRL, BERT, RoBERTa, XLNet).
 GPT, GPT-2 and CTRL are fine-tuned using a causal language modeling (CLM) loss. BERT and RoBERTa are fine-tuned
 using a masked language modeling (MLM) loss. XLNet is fine-tuned using a permutation language modeling (PLM) loss.
+
+Hardcoded do_lower_case for tokenizers to work with Rostlab models.
 """
 
 
@@ -31,7 +33,6 @@ import math
 import os
 from dataclasses import dataclass, field
 from typing import Optional
-from lamb import Lamb
 
 from transformers import (
     CONFIG_MAPPING,
@@ -42,13 +43,15 @@ from transformers import (
     DataCollatorForLanguageModeling,
     DataCollatorForPermutationLanguageModeling,
     HfArgumentParser,
-    LineByLineTextDataset,
+    #LineByLineTextDataset,
     PreTrainedTokenizer,
     TextDataset,
-    Trainer,
+    #Trainer,
     TrainingArguments,
     set_seed,
 )
+from trainer_subclass import LambTrainer as Trainer
+from lazy_dataset import LazyLineByLineTextDataset as LineByLineTextDataset
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -210,9 +213,9 @@ def main():
         logger.warning("You are instantiating a new config instance from scratch.")
 
     if model_args.tokenizer_name:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name, cache_dir=model_args.cache_dir)
+        tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name, cache_dir=model_args.cache_dir, do_lower_case=False)
     elif model_args.model_name_or_path:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, cache_dir=model_args.cache_dir)
+        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, cache_dir=model_args.cache_dir, do_lower_case=False)
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported, but you can do it from another script, save it,"
@@ -249,6 +252,7 @@ def main():
     train_dataset = (
         get_dataset(data_args, tokenizer=tokenizer, cache_dir=model_args.cache_dir) if training_args.do_train else None
     )
+
     eval_dataset = (
         get_dataset(data_args, tokenizer=tokenizer, evaluate=True, cache_dir=model_args.cache_dir)
         if training_args.do_eval
@@ -273,7 +277,6 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         prediction_loss_only=True,
-        optimizer=(Lamb, None)
     )
 
     # Training

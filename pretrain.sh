@@ -1,5 +1,5 @@
 export WANDB_PROJECT=finetune-bert
-wandb login 3850816f07ddd291761dba5da24453c2350b898a
+wandb login "3850816f07ddd291761dba5da24453c2350b898a"
 export TPU_IP_ADDRESS=10.116.37.234
 export XRT_TPU_CONFIG="tpu_worker;0;$TPU_IP_ADDRESS:8470"
 
@@ -12,7 +12,7 @@ python3 train_mlm.py \
  --model_type=bert \
  --model_name_or_path="Rostlab/prot_bert" \
  --do_train \
- --train_data_file=preprossed_merged.txt \
+ --train_data_file=preprocessed_all_short.txt \
  --mlm \
  --mlm_probability=0.15 \
  --block_size=512 \
@@ -20,6 +20,7 @@ python3 train_mlm.py \
  --learning_rate=0.002 \
  --weight_decay=0.01 \
  --max_steps=10000 \
+ --line_by_line \
  --save_steps=2500 \
  --warmup_steps=1333
 
