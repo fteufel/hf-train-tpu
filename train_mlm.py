@@ -1,8 +1,3 @@
-'''
-Based on huggingface examples. 
-Customized because TrainingArguments does not allow to switch to LAMB. Hardcoded LAMB here.
-'''
-
 # coding=utf-8
 # Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
@@ -23,9 +18,10 @@ Fine-tuning the library models for language modeling on a text file (GPT, GPT-2,
 GPT, GPT-2 and CTRL are fine-tuned using a causal language modeling (CLM) loss. BERT and RoBERTa are fine-tuned
 using a masked language modeling (MLM) loss. XLNet is fine-tuned using a permutation language modeling (PLM) loss.
 
-Hardcoded do_lower_case for tokenizers to work with Rostlab models.
-"""
+Changes:
 
+get_dataset uses datasets
+"""
 
 
 import logging
@@ -43,19 +39,17 @@ from transformers import (
     DataCollatorForLanguageModeling,
     DataCollatorForPermutationLanguageModeling,
     HfArgumentParser,
-    #LineByLineTextDataset,
+    LineByLineTextDataset,
     PreTrainedTokenizer,
     TextDataset,
-    #Trainer,
+    Trainer,
     TrainingArguments,
     set_seed,
 )
-from trainer_subclass import LambTrainer as Trainer
-from lazy_dataset import LazyLineByLineTextDataset as LineByLineTextDataset
 
-logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
-logger.info('Logger set up')
+
 
 MODEL_CONFIG_CLASSES = list(MODEL_WITH_LM_HEAD_MAPPING.keys())
 MODEL_TYPES = tuple(conf.model_type for conf in MODEL_CONFIG_CLASSES)
@@ -153,9 +147,27 @@ def get_dataset(
             cache_dir=cache_dir,
         )
 
+from datasets import load_dataset, load_from_disks
+def get_dataset_new(
+    args: DataTrainingArguments,
+    tokenizer: PreTrainedTokenizer,
+    evaluate: bool = False,
+    cache_dir: Optional[str] = None,
+):
+    file_path = args.eval_data_file if evaluate else args.train_data_file  
+
+    if os.path.exists(os.path.splitext(args.train_data_file)[0]):
+        dataset = load_from_disks(os.path.splitext(args.train_data_file)[0])
+    else:
+        ds = load_dataset('text', data_files=[args.train_data_file])
+        dataset = ds['train'].map(lambda examples: tokenizer(examples['text']), batched=True)
+        dataset.save_to_disk(os.path.splitext(args.train_data_file)[0])
+
+    dataset.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask'])
+    return dataset
+
 
 def main():
-    logger.info('entered main')
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
@@ -213,9 +225,9 @@ def main():
         logger.warning("You are instantiating a new config instance from scratch.")
 
     if model_args.tokenizer_name:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name, cache_dir=model_args.cache_dir, do_lower_case=False)
+        tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name, cache_dir=model_args.cache_dir)
     elif model_args.model_name_or_path:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, cache_dir=model_args.cache_dir, do_lower_case=False)
+        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, cache_dir=model_args.cache_dir)
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported, but you can do it from another script, save it,"
@@ -252,7 +264,6 @@ def main():
     train_dataset = (
         get_dataset(data_args, tokenizer=tokenizer, cache_dir=model_args.cache_dir) if training_args.do_train else None
     )
-
     eval_dataset = (
         get_dataset(data_args, tokenizer=tokenizer, evaluate=True, cache_dir=model_args.cache_dir)
         if training_args.do_eval
@@ -279,9 +290,6 @@ def main():
         prediction_loss_only=True,
     )
 
-    from transformers.integrations import is_wandb_available
-    logger.info(f'W&B status: {is_wandb_available()}')
-
     # Training
     if training_args.do_train:
         model_path = (
@@ -289,8 +297,6 @@ def main():
             if model_args.model_name_or_path is not None and os.path.isdir(model_args.model_name_or_path)
             else None
         )
-
-        logger.info('Beginning training')
         trainer.train(model_path=model_path)
         trainer.save_model()
         # For convenience, we also re-save the tokenizer to the same directory,
