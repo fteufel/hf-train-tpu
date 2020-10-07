@@ -12,7 +12,7 @@ python3 train_mlm.py \
  --model_type=bert \
  --model_name_or_path="Rostlab/prot_bert" \
  --do_train \
- --train_data_file=preprocessed_all_short.txt \
+ --train_data_file==debugset.txt \
  --mlm \
  --mlm_probability=0.15 \
  --block_size=512 \
@@ -22,7 +22,8 @@ python3 train_mlm.py \
  --max_steps=10000 \
  --line_by_line \
  --save_steps=2500 \
- --warmup_steps=1333
+ --warmup_steps=1333 \
+ --debug True
 
 
 #original

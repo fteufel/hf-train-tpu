@@ -279,6 +279,9 @@ def main():
         prediction_loss_only=True,
     )
 
+    from transformers.integrations import is_wandb_available
+    logger.info(f'W&B status: {is_wandb_available()}')
+
     # Training
     if training_args.do_train:
         model_path = (
@@ -286,6 +289,8 @@ def main():
             if model_args.model_name_or_path is not None and os.path.isdir(model_args.model_name_or_path)
             else None
         )
+
+        logger.info('Beginning training')
         trainer.train(model_path=model_path)
         trainer.save_model()
         # For convenience, we also re-save the tokenizer to the same directory,
