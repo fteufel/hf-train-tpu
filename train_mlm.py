@@ -160,7 +160,9 @@ def get_dataset(
         dataset = load_from_disk(os.path.splitext(args.train_data_file)[0])
     else:
         ds = load_dataset('text', data_files=[args.train_data_file])
-        dataset = ds['train'].map(lambda examples: tokenizer(examples['text'][:args.block_size]), batched=True)
+        
+        dataset = ds['train'].map(lambda x: {'text_truncated':x['text'][:512]})
+        dataset = dataset.map(lambda examples: tokenizer(examples['text_truncated']), batched=True)
         dataset.save_to_disk(os.path.splitext(args.train_data_file)[0])
 
     dataset.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask'])
