@@ -39,7 +39,7 @@ from transformers import (
     DataCollatorForLanguageModeling,
     DataCollatorForPermutationLanguageModeling,
     HfArgumentParser,
-    LineByLineTextDataset,
+    #LineByLineTextDataset,
     PreTrainedTokenizer,
     TextDataset,
     Trainer,
@@ -47,7 +47,7 @@ from transformers import (
     set_seed,
 )
 
-
+from dataset import LineByLineTextDataset
 logger = logging.getLogger(__name__)
 
 
@@ -128,8 +128,7 @@ class DataTrainingArguments:
         default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
     )
 
-
-def get_dataset_old(
+def get_dataset(
     args: DataTrainingArguments,
     tokenizer: PreTrainedTokenizer,
     evaluate: bool = False,
@@ -148,7 +147,7 @@ def get_dataset_old(
         )
 
 from datasets import load_dataset, load_from_disk
-def get_dataset(
+def get_dataset_hfdatasets(
     args: DataTrainingArguments,
     tokenizer: PreTrainedTokenizer,
     evaluate: bool = False,
@@ -267,6 +266,7 @@ def main():
     train_dataset = (
         get_dataset(data_args, tokenizer=tokenizer, cache_dir=model_args.cache_dir) if training_args.do_train else None
     )
+    import ipdb; ipdb.set_trace()
     eval_dataset = (
         get_dataset(data_args, tokenizer=tokenizer, evaluate=True, cache_dir=model_args.cache_dir)
         if training_args.do_eval
