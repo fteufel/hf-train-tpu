@@ -129,7 +129,7 @@ class DataTrainingArguments:
     )
 
 
-def get_dataset(
+def get_dataset_old(
     args: DataTrainingArguments,
     tokenizer: PreTrainedTokenizer,
     evaluate: bool = False,
@@ -147,8 +147,8 @@ def get_dataset(
             cache_dir=cache_dir,
         )
 
-from datasets import load_dataset, load_from_disks
-def get_dataset_new(
+from datasets import load_dataset, load_from_disk
+def get_dataset(
     args: DataTrainingArguments,
     tokenizer: PreTrainedTokenizer,
     evaluate: bool = False,
@@ -157,10 +157,10 @@ def get_dataset_new(
     file_path = args.eval_data_file if evaluate else args.train_data_file  
 
     if os.path.exists(os.path.splitext(args.train_data_file)[0]):
-        dataset = load_from_disks(os.path.splitext(args.train_data_file)[0])
+        dataset = load_from_disk(os.path.splitext(args.train_data_file)[0])
     else:
         ds = load_dataset('text', data_files=[args.train_data_file])
-        dataset = ds['train'].map(lambda examples: tokenizer(examples['text']), batched=True)
+        dataset = ds['train'].map(lambda examples: tokenizer(examples['text'][:args.block_size]), batched=True)
         dataset.save_to_disk(os.path.splitext(args.train_data_file)[0])
 
     dataset.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask'])
