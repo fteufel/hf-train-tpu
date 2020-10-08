@@ -161,7 +161,8 @@ def get_dataset(
     else:
         ds = load_dataset('text', data_files=[args.train_data_file])
         
-        dataset = ds['train'].map(lambda x: {'text_truncated':x['text'][:512]})
+        if args.block_size != -1:
+            dataset = ds['train'].map(lambda x: {'text_truncated':x['text'][:args.block_size]})
         dataset = dataset.map(lambda examples: tokenizer(examples['text_truncated']), batched=True)
         dataset.save_to_disk(os.path.splitext(args.train_data_file)[0])
 
