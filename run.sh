@@ -1,5 +1,4 @@
 export WANDB_PROJECT=finetune-bert
-wandb login "3850816f07ddd291761dba5da24453c2350b898a"
 export TPU_IP_ADDRESS=10.116.37.234
 export XRT_TPU_CONFIG="tpu_worker;0;$TPU_IP_ADDRESS:8470"
 
