@@ -48,6 +48,8 @@ from transformers import (
 )
 
 from dataset import LineByLineTextDataset
+from datasets import load_dataset, load_from_disk
+
 logger = logging.getLogger(__name__)
 
 
@@ -127,6 +129,10 @@ class DataTrainingArguments:
     overwrite_cache: bool = field(
         default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
     )
+    out_of_core: bool = field(
+    default=False,
+    metadata={"help": "Use Huggingface datasets to keep training data out of core."},
+    )
 
 def get_dataset(
     args: DataTrainingArguments,
@@ -137,6 +143,9 @@ def get_dataset(
     file_path = args.eval_data_file if evaluate else args.train_data_file
     if args.line_by_line:
         return LineByLineTextDataset(tokenizer=tokenizer, file_path=file_path, block_size=args.block_size)
+    if args.out_of_core:
+        return get_dataset_hfdatasets(args, tokenizer, evaluate)
+
     else:
         return TextDataset(
             tokenizer=tokenizer,
@@ -146,12 +155,10 @@ def get_dataset(
             cache_dir=cache_dir,
         )
 
-from datasets import load_dataset, load_from_disk
 def get_dataset_hfdatasets(
     args: DataTrainingArguments,
     tokenizer: PreTrainedTokenizer,
     evaluate: bool = False,
-    cache_dir: Optional[str] = None,
 ):
     file_path = args.eval_data_file if evaluate else args.train_data_file  
 
