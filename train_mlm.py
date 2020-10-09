@@ -161,8 +161,14 @@ def get_dataset_hfdatasets(
         ds = load_dataset('text', data_files=[args.train_data_file])
         
         if args.block_size != -1:
-            dataset = ds['train'].map(lambda x: {'text_truncated':x['text'][:args.block_size]})
-        dataset = dataset.map(lambda examples: tokenizer(examples['text_truncated']), batched=True)
+            #dataset = ds['train'].map(lambda x: {'text_truncated':x['text'][:args.block_size]})
+            dataset = dataset.map(lambda examples: tokenizer(examples['text_truncated'],
+                                                            truncation=True,
+                                                            padding='max_length',
+                                                            max_length=args.block_size), batched=True)
+
+        else:
+            dataset = dataset.map(lambda examples: tokenizer(examples['text_truncated']), batched=True)
         dataset.save_to_disk(os.path.splitext(args.train_data_file)[0])
 
     dataset.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask'])
@@ -266,7 +272,6 @@ def main():
     train_dataset = (
         get_dataset(data_args, tokenizer=tokenizer, cache_dir=model_args.cache_dir) if training_args.do_train else None
     )
-    import ipdb; ipdb.set_trace()
     eval_dataset = (
         get_dataset(data_args, tokenizer=tokenizer, evaluate=True, cache_dir=model_args.cache_dir)
         if training_args.do_eval
