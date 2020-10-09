@@ -6,7 +6,8 @@ from torch.utils.data import Dataset
 import torch
 import logging
 import os
-
+from Pathlib import Path
+import linecache
 logger = logging.getLogger(__name__)
 
 class LineByLineTextDataset(Dataset):
@@ -36,3 +37,43 @@ class LineByLineTextDataset(Dataset):
 
     def __getitem__(self, i) -> torch.Tensor:
         return torch.tensor(self.examples[i], dtype=torch.long)
+
+
+class LazyLineByLineTextDataset(Dataset):
+    '''Truncates sequences at block_size, does not feed the rest to the model.'''
+
+    def __init__(self, tokenizer, file_path, block_size=512):
+        self.fin = file_path
+        self.block_size = block_size
+        self.tokenizer = tokenizer
+        self.num_entries = self._get_n_lines(self.fin)
+
+
+    def _get_n_lines(self, fin):
+        with Path(fin).resolve().open(encoding='utf-8') as fhin:
+            
+            for line_idx, line in enumerate(fhin, 1):
+                pass
+
+        return line_idx
+
+    def __getitem__(self, idx):
+
+        if self.has_empty_lines:
+            idx = idx*2
+
+        # linecache starts counting from one, not zero, +1 the given index
+        idx += 1
+        line = linecache.getline(self.fin, idx)
+        line = line.rstrip()
+        line = self.tokenizer(line, add_special_tokens=True, 
+                                          truncation=True,
+                                          padding='max_length', 
+                                          max_length = block_size)
+
+        #return line
+        return torch.tensor(line["input_ids"], dtype=torch.long)
+
+
+    def __len__(self):
+        return self.num_entries
