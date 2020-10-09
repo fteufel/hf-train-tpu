@@ -105,4 +105,4 @@ class LazyLineByLineTextHuggingFaceDataset(Dataset):
 
 
     def __len__(self):
-        return len(ds)
+        return len(self.ds)
