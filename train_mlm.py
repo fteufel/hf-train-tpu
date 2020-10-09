@@ -141,9 +141,9 @@ def get_dataset(
     cache_dir: Optional[str] = None,
 ):
     file_path = args.eval_data_file if evaluate else args.train_data_file
-    if args.line_by_line:
+    if args.line_by_line and not args.out_of_core:
         return LineByLineTextDataset(tokenizer=tokenizer, file_path=file_path, block_size=args.block_size)
-    if args.out_of_core:
+    if args.out_of_core and args.line_by_line:
         return get_dataset_hfdatasets(args, tokenizer, evaluate)
 
     else:
