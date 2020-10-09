@@ -90,7 +90,6 @@ class LazyLineByLineTextHuggingFaceDataset(Dataset):
         self.ds =  ds['train']
         self.block_size = block_size
         self.tokenizer = tokenizer
-        self.num_entries = self._get_n_lines(self.fin)
 
     def __getitem__(self, idx):
 
