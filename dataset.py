@@ -98,7 +98,7 @@ class LazyLineByLineTextHuggingFaceDataset(Dataset):
         line = self.tokenizer(line, add_special_tokens=True, 
                                           truncation=True,
                                           padding='max_length', 
-                                          max_length = block_size)
+                                          max_length = self.block_size)
 
         #return line
         return torch.tensor(line["input_ids"], dtype=torch.long)
