@@ -8,7 +8,9 @@ import logging
 import os
 from Pathlib import Path
 import linecache
+from datasets import load_dataset
 logger = logging.getLogger(__name__)
+
 
 class LineByLineTextDataset(Dataset):
     """
@@ -77,3 +79,57 @@ class LazyLineByLineTextDataset(Dataset):
 
     def __len__(self):
         return self.num_entries
+
+
+def get_dataset_hfdatasets(
+    args: DataTrainingArguments,
+    tokenizer: PreTrainedTokenizer,
+    evaluate: bool = False,
+):
+    file_path = args.eval_data_file if evaluate else args.train_data_file  
+
+    if os.path.exists(os.path.splitext(args.train_data_file)[0]):
+        dataset = load_from_disk(os.path.splitext(args.train_data_file)[0])
+    else:
+        ds = load_dataset('text', data_files=[args.train_data_file])
+        
+        if args.block_size != -1:
+            dataset = ds['train']#.map(lambda x: {'text_truncated':x['text'][:args.block_size]})
+            dataset = dataset.map(lambda examples: tokenizer(examples['text'],
+                                                            truncation=True,
+                                                            padding='max_length',
+                                                            max_length=args.block_size), batched=True)
+
+        else:
+            dataset = dataset.map(lambda examples: tokenizer(examples['text_truncated']), batched=True)
+        dataset.save_to_disk(os.path.splitext(args.train_data_file)[0])
+
+    dataset.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask'])
+    return dataset
+
+class LazyLineByLineTextHuggingFaceDataset(Dataset):
+    '''Truncates sequences at block_size, does not feed the rest to the model.
+    Uses datasets library to load data out of core instead of linecache'''
+
+    def __init__(self, tokenizer, file_path, block_size=512):
+        ds = load_dataset('text', data_files=[file_path])
+        self.ds =  ds['train']
+        self.block_size = block_size
+        self.tokenizer = tokenizer
+        self.num_entries = self._get_n_lines(self.fin)
+
+    def __getitem__(self, idx):
+
+        # linecache starts counting from one, not zero, +1 the given index
+        line = self.ds[idx]
+        line = self.tokenizer(line, add_special_tokens=True, 
+                                          truncation=True,
+                                          padding='max_length', 
+                                          max_length = block_size)
+
+        #return line
+        return torch.tensor(line["input_ids"], dtype=torch.long)
+
+
+    def __len__(self):
+        return len(ds)

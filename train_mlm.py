@@ -47,7 +47,7 @@ from transformers import (
     set_seed,
 )
 
-from dataset import LineByLineTextDataset, LazyLineByLineTextDataset
+from dataset import LineByLineTextDataset, LazyLineByLineTextDataset, LazyLineByLineTextHuggingFaceDataset
 from datasets import load_dataset, load_from_disk
 
 logger = logging.getLogger(__name__)
@@ -147,10 +147,11 @@ def get_dataset(
     file_path = args.eval_data_file if evaluate else args.train_data_file
     if args.line_by_line and not args.out_of_core:
         return LineByLineTextDataset(tokenizer=tokenizer, file_path=file_path, block_size=args.block_size)
-    if args.out_of_core and args.line_by_line:
+    if args.out_of_core and not args.lazy:
         return get_dataset_hfdatasets(args, tokenizer, evaluate)
     if args.out_of_core and args.lazy:
-        return LazyLineByLineTextDataset(tokenizer=tokenizer, file_path=file_path,block_size=args.block_size)
+        return LazyLineByLineTextHuggingFaceDataset(tokenizer=tokenizer, file_path=file_path,block_size=args.block_size)
+        #return LazyLineByLineTextDataset(tokenizer=tokenizer, file_path=file_path,block_size=args.block_size)
 
     else:
         return TextDataset(
