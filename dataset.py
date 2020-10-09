@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 import torch
 import logging
 import os
-from Pathlib import Path
+from pathlib import Path
 import linecache
 from datasets import load_dataset
 logger = logging.getLogger(__name__)
@@ -80,32 +80,6 @@ class LazyLineByLineTextDataset(Dataset):
     def __len__(self):
         return self.num_entries
 
-
-def get_dataset_hfdatasets(
-    args: DataTrainingArguments,
-    tokenizer: PreTrainedTokenizer,
-    evaluate: bool = False,
-):
-    file_path = args.eval_data_file if evaluate else args.train_data_file  
-
-    if os.path.exists(os.path.splitext(args.train_data_file)[0]):
-        dataset = load_from_disk(os.path.splitext(args.train_data_file)[0])
-    else:
-        ds = load_dataset('text', data_files=[args.train_data_file])
-        
-        if args.block_size != -1:
-            dataset = ds['train']#.map(lambda x: {'text_truncated':x['text'][:args.block_size]})
-            dataset = dataset.map(lambda examples: tokenizer(examples['text'],
-                                                            truncation=True,
-                                                            padding='max_length',
-                                                            max_length=args.block_size), batched=True)
-
-        else:
-            dataset = dataset.map(lambda examples: tokenizer(examples['text_truncated']), batched=True)
-        dataset.save_to_disk(os.path.splitext(args.train_data_file)[0])
-
-    dataset.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask'])
-    return dataset
 
 class LazyLineByLineTextHuggingFaceDataset(Dataset):
     '''Truncates sequences at block_size, does not feed the rest to the model.
