@@ -169,7 +169,7 @@ def get_dataset_hfdatasets(
         
         if args.block_size != -1:
             dataset = ds['train']#.map(lambda x: {'text_truncated':x['text'][:args.block_size]})
-            dataset = dataset.map(lambda examples: tokenizer(examples['text_truncated'],
+            dataset = dataset.map(lambda examples: tokenizer(examples['text'],
                                                             truncation=True,
                                                             padding='max_length',
                                                             max_length=args.block_size), batched=True)
